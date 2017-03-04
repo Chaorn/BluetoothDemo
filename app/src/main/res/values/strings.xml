@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">蓝牙防丢器</string>
+    <string name="action_edit">添加设备</string>
+    <string name="none"></string>
+    <string name="menu_scan">搜索</string>
+    <string name="menu_stop">停止</string>
+    <string name="menu_edit">编辑</string>
+    <string name="menu_save">保存</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">未连接</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+</resources>
