@@ -6,6 +6,8 @@
     <string name="menu_stop">停止</string>
     <string name="menu_edit">编辑</string>
     <string name="menu_save">保存</string>
+    <string name="menu_disconnect">连接</string>
+    <string name="menu_connect">断开</string>
     <string name="connected">已连接</string>
     <string name="disconnected">未连接</string>
     <string name="section_format">Hello World from section: %1$d</string>

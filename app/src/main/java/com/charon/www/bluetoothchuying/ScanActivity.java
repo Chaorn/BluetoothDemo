@@ -20,6 +20,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,7 +31,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 public class ScanActivity extends AppCompatActivity {
@@ -64,6 +64,7 @@ public class ScanActivity extends AppCompatActivity {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                MainActivity.isPause = true;
                 finish();
             }
         });
@@ -175,6 +176,8 @@ public class ScanActivity extends AppCompatActivity {
                             editor.putString("Address"+MainActivity.bleId, address.getText().toString());
                             editor.putInt("Id", MainActivity.bleId);
                             editor.commit();
+                            MainActivity.isPause = false;
+                            MainActivity.isScan = true;
                             finish();
                         }
 
@@ -261,6 +264,12 @@ public class ScanActivity extends AppCompatActivity {
             }
         }
     };
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        MainActivity.isPause = true;
+    }
 
     // Device scan callback.
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
