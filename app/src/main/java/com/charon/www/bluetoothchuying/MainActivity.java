@@ -589,7 +589,7 @@ public class MainActivity extends AppCompatActivity {
             unregisterReceiver(mGattUpdateReceiver);
             isRegister = false;
         }
-        isPause = true;
+        isPause = false;
     }
 
     @Override
