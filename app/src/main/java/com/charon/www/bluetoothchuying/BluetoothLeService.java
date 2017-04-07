@@ -194,7 +194,6 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-//        mBluetoothGatt.disconnect();
         for(BluetoothGatt bluetoothGatt:mBluetoothGattList){
             bluetoothGatt.disconnect();
         }
@@ -268,15 +267,16 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
             System.out.println("onCharacteristicRead");
+            String address = gatt.getDevice().getAddress();
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                //broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                broadcastUpdate(ACTION_DATA_AVAILABLE+address, characteristic);
             }
         }
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt,
                                       BluetoothGattDescriptor descriptor, int status) {
-            System.out.println("onDescriptorWriteonDescriptorWrite = " + status
+            Log.d("123","onDescriptorWriteonDescriptorWrite = " + status
                     + ", descriptor =" + descriptor.getUuid().toString());
         }
 
@@ -284,10 +284,11 @@ public class BluetoothLeService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            //broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            String address = gatt.getDevice().getAddress();
+            broadcastUpdate(ACTION_DATA_AVAILABLE+address, characteristic);
             if (characteristic.getValue() != null) {
                 byte[] arrayOfByte = characteristic.getValue();
-                Log.d("123", Bytes2HexString(arrayOfByte));
+                Log.d("123CharacteristicChanged", Bytes2HexString(arrayOfByte));
             }
         }
 
@@ -304,7 +305,7 @@ public class BluetoothLeService extends Service {
 
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
-            System.out.println("--------write success----- status:" + status);
+            Log.d("123","--------write success----- status:" + status);
         }
     };
 
@@ -350,5 +351,34 @@ public class BluetoothLeService extends Service {
             b[i] = (byte) ((parse(c0) << 4) | parse(c1));
         }
         return b;
+    }
+
+
+    private void broadcastUpdate(final String action,
+                                 final BluetoothGattCharacteristic characteristic) {
+        final Intent intent = new Intent(action);
+
+        // This is special handling for the Heart Rate Measurement profile. Data
+        // parsing is
+        // carried out as per profile specifications:
+        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
+        // 这是心率测量配置文件。
+
+            // For all other profiles, writes the data formatted in HEX.
+            // 对于所有其他的配置文件，用十六进制格式写数据
+            final byte[] data = characteristic.getValue();
+            if (data != null && data.length > 0) {
+                final StringBuilder stringBuilder = new StringBuilder(
+                        data.length);
+                for (byte byteChar : data)
+                    stringBuilder.append(String.format("%02X ", byteChar));
+
+                Log.d("123","发送数据广播ppp" + new String(data) + "\n"
+                        + stringBuilder.toString());
+                intent.putExtra(EXTRA_DATA, new String(data) + "\n"
+                        + stringBuilder.toString());
+            }
+
+        sendBroadcast(intent);
     }
 }

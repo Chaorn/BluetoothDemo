@@ -11,37 +11,73 @@
         android:id="@+id/fragment_image_find"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"
+        android:layout_marginTop="64dp"
         android:src="@drawable/searchthing"
-        android:paddingBottom="16dp"/>
+        android:layout_marginLeft="24dp"/>
+    <ImageView
+        android:id="@+id/fragment_image_wifi"
+        android:layout_width="150dp"
+        android:layout_height="60dp"
+        android:src="@drawable/wifi4"
+        android:layout_marginLeft="36dp"
+        android:layout_marginBottom="22dp"
+        android:layout_above="@+id/fragment_text_name"
+        android:layout_alignEnd="@+id/fragment_button_connect" />
     <TextView
-        android:layout_below="@id/fragment_image_find"
+        android:layout_marginLeft="24dp"
         android:id="@+id/fragment_text_name"
-        android:layout_width="match_parent"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:textSize="18sp"
         android:text="我的钥匙"
         android:textColor="#ffffff"
-        />
+        android:layout_below="@+id/fragment_image_find"
+        android:layout_alignParentStart="true" />
     <TextView
-        android:layout_marginTop="8dp"
-        android:layout_below="@id/fragment_text_name"
+        android:layout_marginTop="19dp"
         android:id="@+id/fragment_text_connect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:textColor="@color/colorWhite"
-        android:text="未连接"/>
+        android:text="未连接"
+        android:layout_below="@+id/fragment_text_name"
+        android:layout_alignParentStart="true" />
     <TextView
-        android:layout_marginTop="8dp"
-        android:layout_below="@id/fragment_text_connect"
-        android:layout_width="match_parent"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:text="信号断开"
         android:gravity="center_horizontal"
         android:textColor="@color/colorWhite"
-        android:id="@+id/fragment_text_rssi"/>
-
+        android:id="@+id/fragment_text_rssi"
+        android:layout_alignBaseline="@+id/fragment_text_name"
+        android:layout_alignBottom="@+id/fragment_text_name"
+        android:layout_alignStart="@+id/fragment_image_wifi" />
+    <TextView
+        android:id="@+id/fragment_button_connect"
+        android:layout_marginTop="56dp"
+        android:layout_below="@id/fragment_text_name"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:background="#4d6c6c"
+        android:text="点击连接"
+        android:gravity="center"
+        android:alpha="0.8"
+        android:textColor="@color/colorWhite"/>
+    <TextView
+        android:id="@+id/fragment_button_alarm"
+        android:layout_marginTop="18dp"
+        android:layout_below="@id/fragment_button_connect"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:background="#4d6c6c"
+        android:text="点击报警"
+        android:gravity="center"
+        android:alpha="0.8"
+        android:textColor="@color/colorWhite"/>
 </RelativeLayout>

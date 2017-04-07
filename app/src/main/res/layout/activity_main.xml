@@ -26,22 +26,21 @@
             android:text="主页"
             android:layout_centerInParent="true"
             android:textColor="@color/colorWhite"
-            android:textSize="22sp"/>
+            android:textSize="18sp"/>
     </RelativeLayout>
     <RelativeLayout
         android:layout_marginTop="?attr/actionBarSize"
         android:layout_width="match_parent"
         android:background="@drawable/shape"
-        android:layout_height="250dp">
+        android:layout_height="match_parent">
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="250dp"
             android:scaleType="centerInside"
             android:src="@drawable/noview128"/>
         <TextView
-
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="250dp"
             android:text="您还没有添加设备哟"
             android:textSize="18sp"
             android:textColor="@color/colorWhite"
@@ -53,21 +52,8 @@
         android:layout_marginTop="?attr/actionBarSize"
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
+        android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-
-        android:layout_marginTop="310dp"
-        android:orientation="vertical">
-        <ListView
-            android:id="@+id/main_list"
-            android:descendantFocusability="blocksDescendants"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </ListView>
-    </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

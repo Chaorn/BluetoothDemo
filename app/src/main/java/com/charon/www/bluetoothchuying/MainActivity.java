@@ -15,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.Image;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -32,6 +33,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -51,15 +53,17 @@ public class MainActivity extends AppCompatActivity {
     ConnectListener connectListener = new ConnectListener();
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 530;
     private static final int REQUEST_ENABLE_BT = 1;
+
     private List<View> list_view = new ArrayList<>();
     private List<TextView> list_text_connect = new ArrayList<>();
     private List<TextView> list_text_rssi = new ArrayList<>();
     private List<Integer> list_int_connect = new ArrayList<>();
+    private List<ImageView> list_image_wifi = new ArrayList<>();
+    private List<TextView> list_button_connect = new ArrayList<>();
+    private List<TextView> list_button_alarm = new ArrayList<>();
+
     private ViewpageAdapter adpter;
-    private SimpleAdapter mSimpleAdapter;
-    private ListView mListView;
     private Toolbar mToolbar;
-    private String mListName[] = new String[]{"LED闪动", "提示音+LED闪动", "防丢功能", "尝试连接"};
     public static int bleId = 0;
     SharedPreferences spre;
     private BluetoothAdapter mBluetoothAdapter;
@@ -70,9 +74,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean isRegister = false;//是否注册
     public static boolean isScan = false;//是否点击搜索
     private boolean isClick = false;//是否连续点击
+    private boolean isEdit = false;//是否编辑
     private Timer timer = new Timer();
     private boolean isHandDis = false;//是否点击断开
     private boolean isDelete = false;//是否点击删除
+
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
@@ -120,9 +126,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         spre = getSharedPreferences("myPref", MODE_PRIVATE);
-        mListView = (ListView) findViewById(R.id.main_list);
-        mSimpleAdapter = new SimpleAdapter(this, getData(), R.layout.main_list, new String[]{"name"}, new int[]{R.id.list_name});
-        mListView.setAdapter(mSimpleAdapter);
+        //mListView = (ListView) findViewById(R.id.main_list);
+        //mSimpleAdapter = new SimpleAdapter(this, getData(), R.layout.main_list, new String[]{"name"}, new int[]{R.id.list_name});
+        //mListView.setAdapter(mSimpleAdapter);
         mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         mToolbar.setTitle("");
 
@@ -157,7 +163,10 @@ public class MainActivity extends AppCompatActivity {
     private void disconnectClearView() {
         list_text_connect.clear();
         list_text_rssi.clear();
+        list_image_wifi.clear();
         list_int_connect.clear();
+        list_button_alarm.clear();
+        list_button_connect.clear();
     }//停止连接的状态
 
     @Override
@@ -189,13 +198,22 @@ public class MainActivity extends AppCompatActivity {
                 TextView text_num = (TextView) view.findViewById(R.id.fragment_text_name);
                 TextView text_conncet = (TextView) view.findViewById(R.id.fragment_text_connect);
                 TextView text_rssi = (TextView) view.findViewById(R.id.fragment_text_rssi);
+                ImageView image_wifi = (ImageView) view.findViewById(R.id.fragment_image_wifi);
+                TextView button_connect = (TextView) view.findViewById(R.id.fragment_button_connect);
+                TextView button_alarm = (TextView) view.findViewById(R.id.fragment_button_alarm);
 
+                button_connect.setOnClickListener(connectListener);
                 text_num.setText(spre.getString("Name" + i, "none"));
                 text_conncet.setText("未连接");
-                text_conncet.setOnClickListener(connectListener);
+                image_wifi.setImageResource(R.drawable.wifi0);
+
                 list_view.add(view);
                 list_text_connect.add(text_conncet);
                 list_text_rssi.add(text_rssi);
+                list_image_wifi.add(image_wifi);
+                list_button_connect.add(button_connect);
+                list_button_alarm.add(button_alarm);
+
             }
 
             adpter = new ViewpageAdapter(list_view);
@@ -216,20 +234,7 @@ public class MainActivity extends AppCompatActivity {
             final int currentNum = mViewPager.getCurrentItem();//当前的页数
             Log.d("123", "第一页" + list_text_connect.get(0).getText());
             Log.d("123", "点击时的页数" + currentNum);
-            if (!isClick) {
-                isClick = false;
-                TimerTask task = null;
-                task = new TimerTask() {
-                    @Override
-                    public void run() {
-                        isClick = false;
 
-                    }
-                };
-                timer.schedule(task, 5000);
-            } else {
-                Toast.makeText(MainActivity.this, "稍等一下改变状态", Toast.LENGTH_SHORT).show();
-            }
             if (list_text_connect.get(currentNum).getText().equals("未连接")) {
                 Intent gattServiceIntent = new Intent(MainActivity.this, BluetoothLeService.class);
                 Log.d("123", "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
@@ -237,11 +242,11 @@ public class MainActivity extends AppCompatActivity {
                 String bleAddress = spre.getString("Address" + currentBleNum, "error");
                 connectBle(bleAddress, currentNum);
                 isHandDis = false;
-            } else {
+                Toast.makeText(MainActivity.this, "正在连接", Toast.LENGTH_SHORT).show();
+            } else if(list_text_connect.get(currentNum).getText().equals("已连接")){
                 isHandDis = true;
                 mBluetoothLeService.disconnectOne(findGattNum(currentNum));
-                //list_text_connect.get(currentNum).setText("未连接");
-                //list_text_rssi.get(currentNum).setText("信号断开");
+                Toast.makeText(MainActivity.this, "正在断开", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -257,6 +262,9 @@ public class MainActivity extends AppCompatActivity {
             list_view.remove(currentNum);
             list_text_connect.remove(currentNum);
             list_text_rssi.remove(currentNum);
+            list_image_wifi.remove(currentNum);
+            list_button_connect.remove(currentNum);
+            list_button_alarm.remove(currentNum);
             list_int_connect.clear();
             mBluetoothLeService.disconnect();
             //mBluetoothLeService.mRssiArray[currentNum] = 10;
@@ -273,8 +281,9 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < MainActivity.bleId; i++) {
                 list_text_connect.get(i).setText("未连接");
                 list_text_rssi.get(i).setText("信号断开");
+                list_button_connect.get(i).setText("点击连接");
+                list_image_wifi.get(i).setImageResource(R.drawable.wifi0);
             }
-
         }
         for (; newId < size; newId++, oldId++) {
             editor.putString("Name" + newId, spre.getString("Name" + oldId, "error" + oldId));
@@ -307,20 +316,11 @@ public class MainActivity extends AppCompatActivity {
         normalDialog.show();
     }
 
-    private List<Map<String, Object>> getData() {
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        for (int i = 0; i < 4; i++) {
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put("name", mListName[i]);
-            list.add(map);
-        }
-        return list;
-    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        int currentNum = mViewPager.getCurrentItem();
         /*if (mListConnect.get(currentNum)) {
             menu.findItem(R.id.menu_connect).setVisible(true);
             menu.findItem(R.id.menu_disconnect).setVisible(false);
@@ -334,20 +334,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.menu_disconnect:
-                /*Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-                Log.d("123", "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
-                int currentNum = mViewPager.getCurrentItem();
-                int currentBleNum = currentNum + 1;
-                String bleAddress = spre.getString("Address"+currentBleNum,"error");
-                connectBle(bleAddress);
-                mListConnect.set(currentNum,true);
-                invalidateOptionsMenu();*/
+            case R.id.menu_edit:
+                if (bleId != 0) {
+                    Intent intent = new Intent(MainActivity.this,EditActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("id",spre.getInt("Id",0));
+                    mBluetoothLeService.disconnect();
+                    isEdit = true;
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                } else Toast.makeText(MainActivity.this, "请添加设备", Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.menu_connect:
-                /*mBluetoothLeService.disconnect();
-                mListConnect.set(mViewPager.getCurrentItem(),false);
-                invalidateOptionsMenu();*/
+            case R.id.menu_setting:
+
                 break;
         }
         int currentNum = mViewPager.getCurrentItem();
@@ -373,9 +372,11 @@ public class MainActivity extends AppCompatActivity {
             Log.d("123", "进入了while" + mBluetoothLeService);
             if (mBluetoothLeService != null) {
                 mBluetoothLeService.connect(address, currentNum);//gatt添加
-                list_text_connect.get(currentNum).setText("已连接");
+                list_text_connect.get(currentNum).setText("正在连接");
                 list_text_rssi.get(currentNum).setText("正在连接");
+                list_button_connect.get(currentNum).setText("正在连接");
                 list_int_connect.add(currentNum);
+                checkConnect(currentNum);
                 break;
             } else {
                 try {
@@ -429,12 +430,10 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String actionAddress = intent.getAction();//接收广播
             int actionLength = actionAddress.length();//接收的广播加了地址
-//            Log.d("123", "actionaddress" + actionAddress + "length" + actionLength);
 
             int addressBegin = actionLength - 17;
             String address = actionAddress.substring(addressBegin, actionLength);//地址
             String action = actionAddress.substring(0, addressBegin);//
-//            Log.d("123", "action: " + action + "    address: " + address);
 
             int currentNum = findWhichPage(address);//通过地址找到首页的第几页
             spre.edit().putInt(address, currentNum).apply();
@@ -462,12 +461,23 @@ public class MainActivity extends AppCompatActivity {
                 if (current < list_text_connect.size() && isScan) {//搜索
                     list_text_connect.get(current).setText("未连接");
                     list_text_rssi.get(current).setText("信号断开");
+                    list_button_connect.get(current).setText("点击连接");
+                    list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
                     Log.d("123", "搜索断开");
                 }
-                if (!isHandDis && !isScan && !isDelete) {//因设备问题，过远普通断开
+                if (isEdit){//编辑
+                    list_text_connect.get(current).setText("未连接");
+                    list_text_rssi.get(current).setText("信号断开");
+                    list_button_connect.get(current).setText("点击连接");
+                    list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
+                    Log.d("123", "编辑断开");
+                }
+                if (!isHandDis && !isScan && !isDelete && !isEdit) {//因设备问题，过远普通断开
                     Log.d("123", "自动断开");
                     list_text_connect.get(current).setText("未连接");
                     list_text_rssi.get(current).setText("信号断开");
+                    list_button_connect.get(current).setText("点击连接");
+                    list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
                     if (gattNum >= 0) {
                         list_int_connect.remove(gattNum);
                         mBluetoothLeService.mBluetoothGattList.remove(gattNum);
@@ -477,6 +487,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("123", "手动断开");
                     list_text_connect.get(current).setText("未连接");
                     list_text_rssi.get(current).setText("信号断开");
+                    list_button_connect.get(current).setText("点击连接");
+                    list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
                     if (gattNum >= 0)
                         list_int_connect.remove(gattNum);
                 }
@@ -494,6 +506,7 @@ public class MainActivity extends AppCompatActivity {
                 //displayGattServices(mBluetoothLeService
                 // .getSupportedGattServices());//10
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                
                 // displayData(intent
                 //  .getStringExtra(BluetoothLeService.EXTRA_DATA));
             } else if (BluetoothLeService.READ_RSSI.equals(action)) {
@@ -556,6 +569,8 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             list_text_rssi.get(currentNum).setText("信号断开");
+            list_image_wifi.get(currentNum).setImageResource(R.drawable.wifi0);
+            list_button_connect.get(currentNum).setText("点击连接");
         }
     }
 
@@ -566,20 +581,64 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (rssi < 0 && rssi > -30)
+                if (rssi < 0 && rssi > -30){
                     list_text_rssi.get(pageId).setText("信号很强");
-                else if (rssi < 0 && rssi > -45)
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi4);
+                    list_button_connect.get(pageId).setText("点击断开");
+                }
+                else if (rssi < 0 && rssi > -45){
                     list_text_rssi.get(pageId).setText("信号较强");
-                else if (rssi > -75 && rssi <= -45)
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi3);
+                    list_button_connect.get(pageId).setText("点击断开");
+                }
+
+                else if (rssi > -75 && rssi <= -45){
                     list_text_rssi.get(pageId).setText("信号一般");
-                else if (rssi <= -75)
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi2);
+                    list_button_connect.get(pageId).setText("点击断开");
+                }
+
+                else if (rssi <= -75){
                     list_text_rssi.get(pageId).setText("信号较弱");
-                else if (rssi == 0)
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi1);
+                    list_button_connect.get(pageId).setText("点击断开");
+                }
+
+                else if (rssi == 0){
                     list_text_rssi.get(pageId).setText("正在连接");
-                else if (rssi >= 0)
-                    list_text_rssi.get(pageId).setText("信号中断");
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);
+                    list_button_connect.get(pageId).setText("正在连接");
+                }
+                else if (rssi >= 0){
+                    list_text_rssi.get(pageId).setText("信号断开");
+                    list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);
+                    list_button_connect.get(pageId).setText("点击连接");
+                }
+
             }
         });
+    }
+
+    private void checkConnect(final int current){
+        final Timer timer = new Timer();
+
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (list_text_connect.get(current).getText().toString().equals("正在连接") && !isDelete) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            list_text_connect.get(current).setText("未连接");
+                            list_text_rssi.get(current).setText("信号断开");
+                            list_button_connect.get(current).setText("点击连接");
+                        }
+                    });
+
+                }
+            }
+        };
+        timer.schedule(timerTask,8000);
     }
 
     @Override
