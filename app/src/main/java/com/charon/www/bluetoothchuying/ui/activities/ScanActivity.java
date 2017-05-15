@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ui.activities;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -20,7 +20,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +27,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.charon.www.bluetoothchuying.ui.adapter.LeDeviceListAdapter;
+import com.charon.www.bluetoothchuying.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -281,18 +283,18 @@ public class ScanActivity extends AppCompatActivity {
 
                         @Override
                         public void run() {
-                            Log.d("123", "mLeScanCallback 搜索结果" );
+                            //Log.d("123", "mLeScanCallback 搜索结果" );
                             //获取到蓝牙设备
                             //可以判断是否添加
                             if (!mBlueList.contains(device)){
                                 mBlueList.add(device);
-                                Log.d("123", "mLeScanCallback 搜索结果   " + device.getAddress());
+                                //Log.d("123", "mLeScanCallback 搜索结果   " + device.getAddress());
                             }
                             //List加载适配器
                             if (mBlueToothDeviceAdapter.isEmpty()) {
-                                Log.d("123", "mLeDeviceListAdapter为空");
+                                //Log.d("123", "mLeDeviceListAdapter为空");
                             } else {
-                                Log.d("123", "mLeDeviceListAdapter设置");
+                                //Log.d("123", "mLeDeviceListAdapter设置");
                                 resultList.setAdapter(mBlueToothDeviceAdapter);
                             }
                             mHandler.sendEmptyMessage(1);

@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ui.adapter;
 
 import android.content.SharedPreferences;
 import android.support.v4.view.PagerAdapter;

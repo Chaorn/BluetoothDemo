@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ble;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;

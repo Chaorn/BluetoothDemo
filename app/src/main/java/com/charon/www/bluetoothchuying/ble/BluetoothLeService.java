@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ble;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -19,6 +19,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+
+import com.charon.www.bluetoothchuying.ui.activities.MainActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +50,8 @@ public class BluetoothLeService extends Service {
     public final static String EXTRA_DATA = "com.charon.www.bluetoothchuying.EXTRA_DATA";
     public final static String READ_RSSI = "com.charon.www.bluetoothchuying.READ_RSSI";
     SharedPreferences spre;
-    /*public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID
-            .fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);*/
+//    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID
+//            .fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
@@ -61,11 +63,6 @@ public class BluetoothLeService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        // After using a given device, you should make sure that
-        // BluetoothGatt.close() is called
-        // such that resources are cleaned up properly. In this particular
-        // example, close() is
-        // invoked when the UI is disconnected from the Service.
         close();
         return super.onUnbind(intent);
     }
@@ -77,6 +74,7 @@ public class BluetoothLeService extends Service {
         }
         listClose(null);
     }
+
     private synchronized void listClose(BluetoothGatt gatt) {
         if (!mBluetoothGattList.isEmpty()) {
             if (gatt != null) {
@@ -107,7 +105,7 @@ public class BluetoothLeService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
-        BluetoothLeService getService() {
+        public BluetoothLeService getService() {
             return BluetoothLeService.this;
         }
     }
@@ -307,7 +305,19 @@ public class BluetoothLeService extends Service {
                                           BluetoothGattCharacteristic characteristic, int status) {
             Log.d("123","--------write success----- status:" + status);
         }
+
     };
+
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic,int gattId) {
+
+        if (mBluetoothAdapter == null || mBluetoothGattList.get(gattId) == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        mBluetoothGattList.get(gattId).writeCharacteristic(characteristic);
+
+    }
 
     private void broadcastUpdate(final String action) {//9发送广播
         final Intent intent = new Intent(action);
@@ -380,5 +390,12 @@ public class BluetoothLeService extends Service {
             }
 
         sendBroadcast(intent);
+    }
+
+    public List<BluetoothGattService> getSupportedGattServices(int gattId) {
+        if (mBluetoothGattList == null)
+            return null;
+
+        return mBluetoothGattList.get(gattId).getServices();
     }
 }

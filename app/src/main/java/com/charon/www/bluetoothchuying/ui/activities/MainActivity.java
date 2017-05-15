@@ -1,10 +1,10 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ui.activities;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -15,10 +15,14 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.media.Image;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -34,15 +38,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.charon.www.bluetoothchuying.ble.BluetoothLeService;
+import com.charon.www.bluetoothchuying.R;
+import com.charon.www.bluetoothchuying.ui.adapter.ViewpageAdapter;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -51,6 +58,7 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
     public static boolean isPause = false;
     ConnectListener connectListener = new ConnectListener();
+    AlarmListener alarmListener = new AlarmListener();
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 530;
     private static final int REQUEST_ENABLE_BT = 1;
 
@@ -61,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ImageView> list_image_wifi = new ArrayList<>();
     private List<TextView> list_button_connect = new ArrayList<>();
     private List<TextView> list_button_alarm = new ArrayList<>();
+    private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
 
     private ViewpageAdapter adpter;
     private Toolbar mToolbar;
@@ -79,6 +88,13 @@ public class MainActivity extends AppCompatActivity {
     private boolean isHandDis = false;//是否点击断开
     private boolean isDelete = false;//是否点击删除
 
+    private final String LIST_NAME = "NAME";
+    private final String LIST_UUID = "UUID";
+
+    private Vibrator vibrator;
+    private MediaPlayer mp ;
+    private  int loseCount = 10;
+
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
@@ -89,9 +105,10 @@ public class MainActivity extends AppCompatActivity {
         init();
         initBle();
 
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);//绑定服务
         Log.d("123", "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -126,9 +143,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         spre = getSharedPreferences("myPref", MODE_PRIVATE);
-        //mListView = (ListView) findViewById(R.id.main_list);
-        //mSimpleAdapter = new SimpleAdapter(this, getData(), R.layout.main_list, new String[]{"name"}, new int[]{R.id.list_name});
-        //mListView.setAdapter(mSimpleAdapter);
         mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         mToolbar.setTitle("");
 
@@ -142,10 +156,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-
-        // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -203,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView button_alarm = (TextView) view.findViewById(R.id.fragment_button_alarm);
 
                 button_connect.setOnClickListener(connectListener);
+                button_alarm.setOnClickListener(alarmListener);
                 text_num.setText(spre.getString("Name" + i, "none"));
                 text_conncet.setText("未连接");
                 image_wifi.setImageResource(R.drawable.wifi0);
@@ -226,6 +237,53 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         isScan = false;
+    }
+
+    private class AlarmListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            int currentId = mViewPager.getCurrentItem();
+            int gattId = findGattNum(currentId);
+            BluetoothGattCharacteristic characteristic ;
+            vibrator.vibrate(new long[]{100,2000,500,2500},-1);
+            mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
+            //mp.prepare();
+            mp.start();
+            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    if (loseCount <= 1) {
+                        mp.release();
+                        loseCount = 10;
+                        return;
+                    } else {
+                        mp.start();
+                        loseCount--;
+                    }
+                }
+            });
+            if (mGattCharacteristics == null) {
+                return;
+            } else {
+                for (int i = 0;i < mGattCharacteristics.size();i++) {
+                    for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
+                        if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("xxxxxxx")) {//对应的uuid
+                            characteristic = mGattCharacteristics.get(i).get(j);
+                            write(characteristic,"");//写入的数据
+                            mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void write(BluetoothGattCharacteristic characteristic, byte byteArray[]) {
+        characteristic.setValue(byteArray);
+    }
+
+    private void write(BluetoothGattCharacteristic characteristic, String string) {
+        characteristic.setValue(string);
     }
 
     private class ConnectListener implements View.OnClickListener {
@@ -267,6 +325,7 @@ public class MainActivity extends AppCompatActivity {
             list_button_alarm.remove(currentNum);
             list_int_connect.clear();
             mBluetoothLeService.disconnect();
+            mGattCharacteristics.remove(currentNum);
             //mBluetoothLeService.mRssiArray[currentNum] = 10;
             adpter.notifyDataSetChanged();
             bleId--;
@@ -440,6 +499,8 @@ public class MainActivity extends AppCompatActivity {
             Log.d("123", currentNum + "current");
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 Log.d("123", "Connected");
+                loseCount = 10;
+                mp.release();
                 int current = spre.getInt(address, -1);
                 //  mConnected = true;
                 //  updateConnectionState(R.string.connected);//8
@@ -458,6 +519,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("123", "current" + current);
                 int gattNum = findGattNum(current);
                 Log.d("123", "DisConnected");
+
                 if (current < list_text_connect.size() && isScan) {//搜索
                     list_text_connect.get(current).setText("未连接");
                     list_text_rssi.get(current).setText("信号断开");
@@ -478,6 +540,24 @@ public class MainActivity extends AppCompatActivity {
                     list_text_rssi.get(current).setText("信号断开");
                     list_button_connect.get(current).setText("点击连接");
                     list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
+
+                    mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
+                    //mp.prepare();
+                    mp.start();
+                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            if (loseCount <= 1) {
+                                mp.release();
+                                loseCount = 10;
+                                return;
+                            } else {
+                                mp.start();
+                                loseCount--;
+                            }
+                        }
+                    });
+                    vibrator.vibrate(new long[]{100,2000,500,2500},-1);
                     if (gattNum >= 0) {
                         list_int_connect.remove(gattNum);
                         mBluetoothLeService.mBluetoothGattList.remove(gattNum);
@@ -499,12 +579,14 @@ public class MainActivity extends AppCompatActivity {
                         isDelete = true;
                     }
                 }
+                mGattCharacteristics.remove(current);
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
                     .equals(action)) {
-//                Log.d("123", "发现新服务");
-                // 搜索需要的uuid
-                //displayGattServices(mBluetoothLeService
-                // .getSupportedGattServices());//10
+                int gattId = findGattNum(currentNum);
+                displayGattServices(mBluetoothLeService
+                .getSupportedGattServices(gattId));//10
+
+                Toast.makeText(MainActivity.this, "发现新services", Toast.LENGTH_SHORT).show();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 
                 // displayData(intent
@@ -661,5 +743,23 @@ public class MainActivity extends AppCompatActivity {
         }
         mExit = 1;
         Log.i("123", "MainActivity closed!!!");
+    }
+
+    private void displayGattServices(List<BluetoothGattService> gattServices) {
+        if (gattServices == null)
+            return;
+        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+        // Loops through available GATT Services.
+        for (BluetoothGattService gattService : gattServices) {
+            List<BluetoothGattCharacteristic> gattCharacteristics = gattService
+                    .getCharacteristics();
+            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<BluetoothGattCharacteristic>();
+            // Loops through available Characteristics.
+            for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                charas.add(gattCharacteristic);
+            }
+            mGattCharacteristics.add(charas);
+        }
     }
 }

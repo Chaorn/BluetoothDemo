@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ui.adapter;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.charon.www.bluetoothchuying.R;
 
 import java.util.List;
 

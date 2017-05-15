@@ -1,4 +1,4 @@
-package com.charon.www.bluetoothchuying;
+package com.charon.www.bluetoothchuying.ui.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +18,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.charon.www.bluetoothchuying.R;
 
 
 public class EditActivity extends AppCompatActivity {
