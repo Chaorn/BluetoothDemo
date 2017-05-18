@@ -62,5 +62,10 @@
         android:layout_gravity="bottom"
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/search" />
-
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/show"
+        android:text="000"
+        android:visibility="gone"/>
 </android.support.design.widget.CoordinatorLayout>

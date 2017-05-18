@@ -36,6 +36,7 @@ import java.util.List;
 
 
 public class ScanActivity extends AppCompatActivity {
+    private final static String TAG = ScanActivity.class.getSimpleName();
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 530;
     private BluetoothAdapter mBluetoothAdapter;
     //搜索BUTTON

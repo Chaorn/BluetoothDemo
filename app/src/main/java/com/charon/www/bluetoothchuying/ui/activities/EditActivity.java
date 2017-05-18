@@ -23,6 +23,7 @@ import com.charon.www.bluetoothchuying.R;
 
 
 public class EditActivity extends AppCompatActivity {
+    private final static String TAG = EditActivity.class.getSimpleName();
     private EditText mEditView;
     private int mDeviceId;
     private boolean mEditing =false;
@@ -58,7 +59,7 @@ public class EditActivity extends AppCompatActivity {
                 return false;
             }
         });
-        Log.d("123", mDeviceId + "EditAc");
+        Log.d("TAG", mDeviceId + "EditAc");
     }
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_edit, menu);

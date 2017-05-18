@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 
 @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD)
@@ -70,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
     private List<TextView> list_button_connect = new ArrayList<>();
     private List<TextView> list_button_alarm = new ArrayList<>();
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+    private TextView show;
 
     private ViewpageAdapter adpter;
     private Toolbar mToolbar;
@@ -94,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
     private Vibrator vibrator;
     private MediaPlayer mp ;
     private  int loseCount = 10;
-
+    private boolean isAlarm = false;
+    boolean getRssi = false;
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
@@ -155,6 +159,8 @@ public class MainActivity extends AppCompatActivity {
                 showNormalDialog(spre.getString("Name" + currentId, "none"));
             }
         });
+
+        show = (TextView) findViewById(R.id.show);
 
         mViewPager = (ViewPager) findViewById(R.id.container);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -242,11 +248,9 @@ public class MainActivity extends AppCompatActivity {
     private class AlarmListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            int currentId = mViewPager.getCurrentItem();
-            int gattId = findGattNum(currentId);
-            BluetoothGattCharacteristic characteristic ;
-            vibrator.vibrate(new long[]{100,2000,500,2500},-1);
-            mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
+
+            //vibrator.vibrate(new long[]{100,2000,500,2500},-1);
+            /*mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
             //mp.prepare();
             mp.start();
             mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -261,16 +265,42 @@ public class MainActivity extends AppCompatActivity {
                         loseCount--;
                     }
                 }
-            });
-            if (mGattCharacteristics == null) {
-                return;
-            } else {
-                for (int i = 0;i < mGattCharacteristics.size();i++) {
-                    for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
-                        if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("xxxxxxx")) {//对应的uuid
-                            characteristic = mGattCharacteristics.get(i).get(j);
-                            write(characteristic,"");//写入的数据
-                            mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+            });*/
+
+            int currentId = mViewPager.getCurrentItem();
+            int gattId = findGattNum(currentId);
+            BluetoothGattCharacteristic characteristic ;
+            if (list_button_alarm.get(currentId).getText().toString().equals("点击报警") ){
+                list_button_alarm.get(currentId).setText("取消报警");
+                if (mGattCharacteristics == null) {
+                    return;
+                } else {
+                    for (int i = 0;i < mGattCharacteristics.size();i++) {
+                        for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
+                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
+                                characteristic = mGattCharacteristics.get(i).get(j);
+                                write(characteristic,new byte[] {(byte) 0xff});//写入的数据
+                                mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+                                Log.d("123", "发送点击报警成功");
+                                Toast.makeText(MainActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                }
+            } else if (list_button_alarm.get(currentId).getText().toString().equals("取消报警")){
+                list_button_alarm.get(currentId).setText("点击报警");
+                if (mGattCharacteristics == null) {
+                    return;
+                } else {
+                    for (int i = 0;i < mGattCharacteristics.size();i++) {
+                        for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
+                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
+                                characteristic = mGattCharacteristics.get(i).get(j);
+                                write(characteristic,new byte[] {0x00});//写入的数据
+                                mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+                                Log.d("123", "发送取消报警成功");
+                                Toast.makeText(MainActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 }
@@ -307,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "正在断开", Toast.LENGTH_SHORT).show();
             }
         }
-
     }
 
     private void deleteView() {
@@ -315,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
         int size = list_view.size();
         int oldId = currentNum + 2;
         int newId = currentNum + 1;
+        int gattNum = findGattNum(currentNum);
         SharedPreferences.Editor editor = spre.edit();
         if (size > 0) {
             list_view.remove(currentNum);
@@ -325,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
             list_button_alarm.remove(currentNum);
             list_int_connect.clear();
             mBluetoothLeService.disconnect();
-            mGattCharacteristics.remove(currentNum);
+//            mGattCharacteristics.remove(gattNum);
             //mBluetoothLeService.mRssiArray[currentNum] = 10;
             adpter.notifyDataSetChanged();
             bleId--;
@@ -380,13 +410,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        /*if (mListConnect.get(currentNum)) {
-            menu.findItem(R.id.menu_connect).setVisible(true);
-            menu.findItem(R.id.menu_disconnect).setVisible(false);
-        } else {
-            menu.findItem(R.id.menu_connect).setVisible(false);
-            menu.findItem(R.id.menu_disconnect).setVisible(true);
-        }*/
         return true;
     }
 
@@ -395,9 +418,10 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_edit:
                 if (bleId != 0) {
+                    int current = mViewPager.getCurrentItem();
                     Intent intent = new Intent(MainActivity.this,EditActivity.class);
                     Bundle bundle = new Bundle();
-                    bundle.putInt("id",spre.getInt("Id",0));
+                    bundle.putInt("id",current+1);
                     mBluetoothLeService.disconnect();
                     isEdit = true;
                     intent.putExtras(bundle);
@@ -405,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
                 } else Toast.makeText(MainActivity.this, "请添加设备", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.menu_setting:
-
+                Toast.makeText(MainActivity.this, "暂未开发，敬请期待", Toast.LENGTH_SHORT).show();
                 break;
         }
         int currentNum = mViewPager.getCurrentItem();
@@ -500,7 +524,11 @@ public class MainActivity extends AppCompatActivity {
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 Log.d("123", "Connected");
                 loseCount = 10;
-                mp.release();
+                if (mp != null) {
+                    mp.release();
+                    isAlarm = false;
+                }
+
                 int current = spre.getInt(address, -1);
                 //  mConnected = true;
                 //  updateConnectionState(R.string.connected);//8
@@ -543,12 +571,18 @@ public class MainActivity extends AppCompatActivity {
 
                     mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
                     //mp.prepare();
-                    mp.start();
+                    if (!isAlarm && getRssi) {
+                        mp.start();
+                        isAlarm = true;
+                        getRssi = false;
+                    }
+
                     mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {
                             if (loseCount <= 1) {
                                 mp.release();
+                                isAlarm = false;
                                 loseCount = 10;
                                 return;
                             } else {
@@ -579,13 +613,27 @@ public class MainActivity extends AppCompatActivity {
                         isDelete = true;
                     }
                 }
-                mGattCharacteristics.remove(current);
+//                if (mGattCharacteristics != null) {
+//                    mGattCharacteristics.remove(gattNum);
+//                }
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
                     .equals(action)) {
                 int gattId = findGattNum(currentNum);
                 displayGattServices(mBluetoothLeService
                 .getSupportedGattServices(gattId));//10
-
+//                String read  = "";
+//                for (UUID readUuid : mBluetoothLeService.readUuid) {
+//                    read = read +"读    "+ readUuid.toString();
+//                }
+//                String write  = "";
+//                for (UUID writeUuid : mBluetoothLeService.writeUuid) {
+//                    write = write +"写    "+ writeUuid.toString();
+//                }
+//                String notify  = "";
+//                for (UUID notifyUuid : mBluetoothLeService.notifyUuid) {
+//                    notify = notify +"提醒    "+ notifyUuid.toString();
+//                }
+                //show.setText("可读："+read +"可写："+write+"可提醒："+notify);
                 Toast.makeText(MainActivity.this, "发现新services", Toast.LENGTH_SHORT).show();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 
@@ -659,33 +707,33 @@ public class MainActivity extends AppCompatActivity {
     private void checkRssi(final int pageId) {
         Log.d("123", "checkRssi的pageId" + pageId);
         final int rssi = mBluetoothLeService.mRssiArray[pageId];
+        getRssi = true;
         Log.d("123", "rssi:" + rssi);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (rssi < 0 && rssi > -30){
+                if (rssi < 0 && rssi > -50){
                     list_text_rssi.get(pageId).setText("信号很强");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi4);
                     list_button_connect.get(pageId).setText("点击断开");
                 }
-                else if (rssi < 0 && rssi > -45){
+                else if (rssi <= -50 && rssi > -70){
                     list_text_rssi.get(pageId).setText("信号较强");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi3);
                     list_button_connect.get(pageId).setText("点击断开");
                 }
 
-                else if (rssi > -75 && rssi <= -45){
+                else if (rssi > -90 && rssi <= -70){
                     list_text_rssi.get(pageId).setText("信号一般");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi2);
                     list_button_connect.get(pageId).setText("点击断开");
                 }
 
-                else if (rssi <= -75){
+                else if (rssi <= -90){
                     list_text_rssi.get(pageId).setText("信号较弱");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi1);
                     list_button_connect.get(pageId).setText("点击断开");
                 }
-
                 else if (rssi == 0){
                     list_text_rssi.get(pageId).setText("正在连接");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);

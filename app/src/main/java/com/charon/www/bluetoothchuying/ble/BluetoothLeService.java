@@ -31,6 +31,7 @@ import java.util.UUID;
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothLeService extends Service {
+
     private int currentNum;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -53,6 +54,10 @@ public class BluetoothLeService extends Service {
 //    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID
 //            .fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
+
+    public List<UUID> writeUuid = new ArrayList<>();
+    public List<UUID> readUuid =new ArrayList<>();
+    public List<UUID> notifyUuid =new ArrayList<>();
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
     @Nullable
@@ -68,7 +73,7 @@ public class BluetoothLeService extends Service {
     }
 
     public void close() {
-        Log.d("123", "current" + currentNum);
+        Log.d("TAG", "current" + currentNum);
         if (mBluetoothGattList.isEmpty()) {
             return;
         }
@@ -118,14 +123,14 @@ public class BluetoothLeService extends Service {
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
-                Log.d("123", "不能初始化BluetoothManager.");
+                Log.d("TAG", "不能初始化BluetoothManager.");
                 return false;
             }
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
-            Log.d("123", "不能获取a BluetoothAdapter.");
+            Log.d("TAG", "不能获取a BluetoothAdapter.");
             return false;
         }
 
@@ -134,9 +139,9 @@ public class BluetoothLeService extends Service {
 
     //4
     public boolean connect(final String address,int currentNum) {//4
-        Log.d("123", "连接" + mBluetoothDeviceAddress);
+        Log.d("TAG", "连接" + mBluetoothDeviceAddress);
         if (mBluetoothAdapter == null || address == null) {
-            Log.d("123",
+            Log.d("TAG",
                     "BluetoothAdapter不能初始化 or 未知 address.");
             return false;
         }
@@ -158,7 +163,7 @@ public class BluetoothLeService extends Service {
         final BluetoothDevice device = mBluetoothAdapter
                 .getRemoteDevice(address);
         if (device == null) {
-            Log.d("123", "设备没找到，不能连接");
+            Log.d("TAG", "设备没找到，不能连接");
             return false;
         }
         // We want to directly connect to the device, so we are setting the
@@ -172,7 +177,7 @@ public class BluetoothLeService extends Service {
         }
 
         //这个方法需要三个参 数：一个Context对象，自动连接（boolean值,表示只要BLE设备可用是否自动连接到它），和BluetoothGattCallback调用。
-        Log.d("123", "Trying to create a new connection.");
+        Log.d("TAG", "Trying to create a new connection.");
         mConnectionState = STATE_CONNECTING;
         //mBluetoothGatt.readRemoteRssi();
         return true;
@@ -205,7 +210,7 @@ public class BluetoothLeService extends Service {
         }
         mBluetoothGattList.get(currentNum).disconnect();
         mBluetoothGattList.remove(currentNum);
-        Log.d("123", "disconnectOne gattList" + mBluetoothGattList.size());
+        Log.d("TAG", "disconnectOne gattList" + mBluetoothGattList.size());
     }
 
     private int findWhichPage(String address) {
@@ -217,14 +222,24 @@ public class BluetoothLeService extends Service {
                 break;
             }
         }
-        Log.d("123", "选择的页数：" + num);
+        Log.d("TAG", "选择的页数：" + num);
         return num;
     }
+
+
+
+
+
+
 
     //通过BLE API的不同类型的回调方法
     // Implements callback methods for GATT events that the app cares about. For
     // example,
     // connection change and services discovered.
+
+
+
+
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {//5
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status,
@@ -241,6 +256,9 @@ public class BluetoothLeService extends Service {
                 Log.i("123", "Attempting to start service discovery:"
                         + mBluetoothGattList.get(currentNum).discoverServices());
                 broadcastUpdate(intentAction);//6
+                gatt.discoverServices();
+
+
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {//当设备无法连接
                 intentAction = ACTION_GATT_DISCONNECTED+address;
                 mConnectionState = STATE_DISCONNECTED;
@@ -253,9 +271,41 @@ public class BluetoothLeService extends Service {
         // 发现新服务端
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             String address = gatt.getDevice().getAddress();
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED+address);
-            } else {
+//            if (status == BluetoothGatt.GATT_SUCCESS) {
+//                List<BluetoothGattService> supportedGattServices =gatt.getServices();
+//                for(int i=0;i<supportedGattServices.size();i++){
+//                    Log.e("AAAAA","1:BluetoothGattService UUID=:"+supportedGattServices.get(i).getUuid());
+//                    List<BluetoothGattCharacteristic> listGattCharacteristic=supportedGattServices.get(i).getCharacteristics();
+//                    for(int j=0;j<listGattCharacteristic.size();j++){
+//                        Log.e("a","2:   BluetoothGattCharacteristic UUID=:"+listGattCharacteristic.get(j).getUuid());
+//                    }
+                 if (status == BluetoothGatt.GATT_SUCCESS) {
+                     List<BluetoothGattService> supportedGattServices = gatt.getServices();
+
+                     for (BluetoothGattService gattService : supportedGattServices) {
+                         List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
+                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                             int charaProp = gattCharacteristic.getProperties();
+                             if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+                                 Log.e("nihao", "gattCharacteristic的UUID为:" + gattCharacteristic.getUuid());
+                                 Log.e("nihao", "gattCharacteristic的属性为:  可读");
+                                 readUuid.add(gattCharacteristic.getUuid());
+                             }
+                             if ((charaProp | BluetoothGattCharacteristic.PROPERTY_WRITE) > 0) {
+                                 Log.e("nihao", "gattCharacteristic的UUID为:" + gattCharacteristic.getUuid());
+                                 Log.e("nihao", "gattCharacteristic的属性为:  可写");
+                                 writeUuid.add(gattCharacteristic.getUuid());
+                             }
+                             if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                                 Log.e("nihao", "gattCharacteristic的UUID为:" + gattCharacteristic.getUuid() + gattCharacteristic);
+                                 Log.e("nihao", "gattCharacteristic的属性为:  具备通知属性");
+                                 notifyUuid.add(gattCharacteristic.getUuid());
+                             }
+                         }
+                     }
+                     broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED + address);
+
+            }else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
         }
@@ -313,10 +363,7 @@ public class BluetoothLeService extends Service {
         if (mBluetoothAdapter == null || mBluetoothGattList.get(gattId) == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
-        }
-
-        mBluetoothGattList.get(gattId).writeCharacteristic(characteristic);
-
+        } else mBluetoothGattList.get(gattId).writeCharacteristic(characteristic);
     }
 
     private void broadcastUpdate(final String action) {//9发送广播
