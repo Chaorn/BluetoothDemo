@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     private final String LIST_UUID = "UUID";
 
     private Vibrator vibrator;
-    private MediaPlayer mp ;
+    private static MediaPlayer mp;
     private  int loseCount = 10;
     private boolean isAlarm = false;
     boolean getRssi = false;
@@ -525,9 +525,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("123", "Connected");
                 loseCount = 10;
                 if (mp != null) {
-                    mp.release();
-                    isAlarm = false;
+                    if (mp.isPlaying()) {
+                        try {
+                            mp.stop();
+                            mp.release();
+                            isAlarm = false;
+                        }catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
+
+
 
                 int current = spre.getInt(address, -1);
                 //  mConnected = true;
@@ -569,28 +578,28 @@ public class MainActivity extends AppCompatActivity {
                     list_button_connect.get(current).setText("点击连接");
                     list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
 
-                    mp = MediaPlayer.create(MainActivity.this, R.raw.alarm8);
                     //mp.prepare();
-                    if (!isAlarm && getRssi) {
-                        mp.start();
+                    Log.d("123", "isAlarm"+isAlarm +"getRssi"+ getRssi);
+                    if (!isAlarm && getRssi ) {
+                        play();
                         isAlarm = true;
                         getRssi = false;
                     }
 
-                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            if (loseCount <= 1) {
-                                mp.release();
-                                isAlarm = false;
-                                loseCount = 10;
-                                return;
-                            } else {
-                                mp.start();
-                                loseCount--;
-                            }
-                        }
-                    });
+//                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//                        @Override
+//                        public void onCompletion(MediaPlayer mp) {
+//                            if (loseCount <= 1) {
+//                                mp.release();
+//                                isAlarm = false;
+//                                loseCount = 10;
+//                                return;
+//                            } else {
+//                                mp.start();
+//                                loseCount--;
+//                            }
+//                        }
+//                    });
                     vibrator.vibrate(new long[]{100,2000,500,2500},-1);
                     if (gattNum >= 0) {
                         list_int_connect.remove(gattNum);
@@ -704,6 +713,39 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected void play() {
+        System.out.println("play");
+        mp = MediaPlayer.create(this, R.raw.alarm8);
+        try {
+//            mpMediaPlayer.prepare();
+
+            if(mp.isPlaying()){
+                mp.stop();
+                mp.release();
+                mp = MediaPlayer.create(this, R.raw.alarm8);
+            }
+
+            mp.start();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+        mp.start();
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {//设置重复播放
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                if (loseCount <= 1) {
+                    mp.release();
+                    isAlarm = false;
+                    loseCount = 10;
+                    return;
+                } else {
+                    mp.start();
+                    loseCount--;
+                }
+            }
+        });
+    }
+
     private void checkRssi(final int pageId) {
         Log.d("123", "checkRssi的pageId" + pageId);
         final int rssi = mBluetoothLeService.mRssiArray[pageId];
@@ -770,6 +812,8 @@ public class MainActivity extends AppCompatActivity {
         };
         timer.schedule(timerTask,8000);
     }
+
+
 
     @Override
     protected void onPause() {
