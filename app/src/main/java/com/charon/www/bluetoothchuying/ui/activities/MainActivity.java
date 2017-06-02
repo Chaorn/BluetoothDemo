@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Vibrator vibrator;
     private static MediaPlayer mp;
-    private  int loseCount = 10;
+    private int loseCount = 10;
     private boolean isAlarm = false;
     boolean getRssi = false;
 
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mHandler = new Handler();
+
         init();
         initBle();
 
@@ -144,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
         }
     }
+
 
     private void init() {
         spre = getSharedPreferences("myPref", MODE_PRIVATE);
@@ -269,35 +271,35 @@ public class MainActivity extends AppCompatActivity {
 
             int currentId = mViewPager.getCurrentItem();
             int gattId = findGattNum(currentId);
-            BluetoothGattCharacteristic characteristic ;
-            if (list_button_alarm.get(currentId).getText().toString().equals("点击报警") ){
+            BluetoothGattCharacteristic characteristic;
+            if (list_button_alarm.get(currentId).getText().toString().equals("点击报警")) {
                 list_button_alarm.get(currentId).setText("取消报警");
                 if (mGattCharacteristics == null) {
                     return;
                 } else {
-                    for (int i = 0;i < mGattCharacteristics.size();i++) {
+                    for (int i = 0; i < mGattCharacteristics.size(); i++) {
                         for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
                             if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
                                 characteristic = mGattCharacteristics.get(i).get(j);
-                                write(characteristic,new byte[] {(byte) 0xff});//写入的数据
-                                mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+                                write(characteristic, new byte[]{(byte) 0xff});//写入的数据
+                                mBluetoothLeService.writeCharacteristic(characteristic, gattId);
                                 Log.d("123", "发送点击报警成功");
                                 Toast.makeText(MainActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
                 }
-            } else if (list_button_alarm.get(currentId).getText().toString().equals("取消报警")){
+            } else if (list_button_alarm.get(currentId).getText().toString().equals("取消报警")) {
                 list_button_alarm.get(currentId).setText("点击报警");
                 if (mGattCharacteristics == null) {
                     return;
                 } else {
-                    for (int i = 0;i < mGattCharacteristics.size();i++) {
+                    for (int i = 0; i < mGattCharacteristics.size(); i++) {
                         for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
                             if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
                                 characteristic = mGattCharacteristics.get(i).get(j);
-                                write(characteristic,new byte[] {0x00});//写入的数据
-                                mBluetoothLeService.writeCharacteristic(characteristic,gattId);
+                                write(characteristic, new byte[]{0x00});//写入的数据
+                                mBluetoothLeService.writeCharacteristic(characteristic, gattId);
                                 Log.d("123", "发送取消报警成功");
                                 Toast.makeText(MainActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
                             }
@@ -331,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                 connectBle(bleAddress, currentNum);
                 isHandDis = false;
                 Toast.makeText(MainActivity.this, "正在连接", Toast.LENGTH_SHORT).show();
-            } else if(list_text_connect.get(currentNum).getText().equals("已连接")){
+            } else if (list_text_connect.get(currentNum).getText().equals("已连接")) {
                 isHandDis = true;
                 mBluetoothLeService.disconnectOne(findGattNum(currentNum));
                 Toast.makeText(MainActivity.this, "正在断开", Toast.LENGTH_SHORT).show();
@@ -406,7 +408,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -419,9 +420,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.menu_edit:
                 if (bleId != 0) {
                     int current = mViewPager.getCurrentItem();
-                    Intent intent = new Intent(MainActivity.this,EditActivity.class);
+                    Intent intent = new Intent(MainActivity.this, EditActivity.class);
                     Bundle bundle = new Bundle();
-                    bundle.putInt("id",current+1);
+                    bundle.putInt("id", current + 1);
                     mBluetoothLeService.disconnect();
                     isEdit = true;
                     intent.putExtras(bundle);
@@ -524,18 +525,29 @@ public class MainActivity extends AppCompatActivity {
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 Log.d("123", "Connected");
                 loseCount = 10;
+//                if (mp != null) {
+//                    try {
+//                        if (mp.isPlaying()) {
+//                            Log.d("mp","playing");
+//                            mp.stop();
+//                            mp.release();
+//                            isAlarm = false;
+//                        }
+//                    } catch (IllegalStateException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
                 if (mp != null) {
-                    if (mp.isPlaying()) {
-                        try {
-                            mp.stop();
-                            mp.release();
-                            isAlarm = false;
-                        }catch (IllegalStateException e) {
-                            e.printStackTrace();
-                        }
+                    if (mp.isPlaying())
+                    {
+                        Log.d("mp", "connect isPlaying");
+                        mp.stop();
+                        mp.release();
+                        mp = null;
+                        isAlarm = false;
+                        //mp = MediaPlayer.create(MainActivity.this,R.raw.alarm8);
                     }
                 }
-
 
 
                 int current = spre.getInt(address, -1);
@@ -564,7 +576,7 @@ public class MainActivity extends AppCompatActivity {
                     list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
                     Log.d("123", "搜索断开");
                 }
-                if (isEdit){//编辑
+                if (isEdit) {//编辑
                     list_text_connect.get(current).setText("未连接");
                     list_text_rssi.get(current).setText("信号断开");
                     list_button_connect.get(current).setText("点击连接");
@@ -579,11 +591,14 @@ public class MainActivity extends AppCompatActivity {
                     list_image_wifi.get(current).setImageResource(R.drawable.wifi0);
 
                     //mp.prepare();
-                    Log.d("123", "isAlarm"+isAlarm +"getRssi"+ getRssi);
-                    if (!isAlarm && getRssi ) {
-                        play();
+                    Log.d("123", "isAlarm" + isAlarm + "getRssi" + getRssi);
+                    if (!isAlarm && getRssi) {
+                        Log.d("mp","disconnect_play");
+                        //play();
                         isAlarm = true;
                         getRssi = false;
+                        doPlayVoice();
+
                     }
 
 //                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -600,7 +615,7 @@ public class MainActivity extends AppCompatActivity {
 //                            }
 //                        }
 //                    });
-                    vibrator.vibrate(new long[]{100,2000,500,2500},-1);
+                    vibrator.vibrate(new long[]{100, 2000, 500, 2500}, -1);
                     if (gattNum >= 0) {
                         list_int_connect.remove(gattNum);
                         mBluetoothLeService.mBluetoothGattList.remove(gattNum);
@@ -629,7 +644,7 @@ public class MainActivity extends AppCompatActivity {
                     .equals(action)) {
                 int gattId = findGattNum(currentNum);
                 displayGattServices(mBluetoothLeService
-                .getSupportedGattServices(gattId));//10
+                        .getSupportedGattServices(gattId));//10
 //                String read  = "";
 //                for (UUID readUuid : mBluetoothLeService.readUuid) {
 //                    read = read +"读    "+ readUuid.toString();
@@ -645,7 +660,7 @@ public class MainActivity extends AppCompatActivity {
                 //show.setText("可读："+read +"可写："+write+"可提醒："+notify);
                 Toast.makeText(MainActivity.this, "发现新services", Toast.LENGTH_SHORT).show();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                
+
                 // displayData(intent
                 //  .getStringExtra(BluetoothLeService.EXTRA_DATA));
             } else if (BluetoothLeService.READ_RSSI.equals(action)) {
@@ -697,12 +712,11 @@ public class MainActivity extends AppCompatActivity {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (list_text_connect.size() > currentNum){
+                        if (list_text_connect.size() > currentNum) {
                             if (list_text_connect.get(currentNum).getText().toString().equals("已连接")) {
                                 getRssi(true);
                             }
                         }
-
                     }
                 }, 3000);
             }
@@ -715,21 +729,23 @@ public class MainActivity extends AppCompatActivity {
 
     protected void play() {
         System.out.println("play");
-        mp = MediaPlayer.create(this, R.raw.alarm8);
+
         try {
 //            mpMediaPlayer.prepare();
-
-            if(mp.isPlaying()){
+            if (mp.isPlaying()) {
+                Log.d("mp", "isPlaying");
                 mp.stop();
                 mp.release();
-                mp = MediaPlayer.create(this, R.raw.alarm8);
+                mp = null;
             }
-
             mp.start();
+
         } catch (IllegalStateException e) {
             e.printStackTrace();
+            //getMp().start();
         }
-        mp.start();
+
+        //getMp().start();
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {//设置重复播放
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
@@ -745,6 +761,63 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    private void doPlayVoice() {
+        if (mp == null)
+        {
+            Log.d("mp", "mp == null");
+            mp = MediaPlayer.create(this,R.raw.alarm8);
+        }
+        // 这里就直接用mp.isPlaying()，因为不可能再报IllegalArgumentException异常了
+        if (mp.isPlaying())
+        {
+            Log.d("mp", "isPlaying");
+            mp.stop();
+            mp.release();
+            mp = null;
+            mp = MediaPlayer.create(this,R.raw.alarm8);
+        }
+        try
+        {
+            //mp.setDataSource(src);
+            mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    Log.d("mp", "start");
+                    mp.start();
+                }
+            });
+            // Prepare to async playing
+            mp.prepareAsync();
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException e)
+        {
+            e.printStackTrace();
+        }
+
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp)
+            {
+                /* 因为我本地java的mp对象是定义的全局变量，所以通过类名.this.mp的方式得到我的对象，而非操作onCompletion(MediaPlayer mp)参数传给我的native对象，这样一来，本地java对象就被销毁了，native对象自然也被销毁了
+                 */
+                if (loseCount <= 1) {
+                    MainActivity.mp.release();
+                    MainActivity.mp = null;
+                    isAlarm = false;
+                    loseCount = 10;
+                } else {
+                    mp.start();
+                    loseCount--;
+                }
+            }
+        });
+    }
+
+    private MediaPlayer getMp() {
+        if (mp == null) {
+            mp = MediaPlayer.create(this, R.raw.alarm8);
+        }
+        return mp;
+    }
 
     private void checkRssi(final int pageId) {
         Log.d("123", "checkRssi的pageId" + pageId);
@@ -754,34 +827,27 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (rssi < 0 && rssi > -50){
+                if (rssi < 0 && rssi > -50) {
                     list_text_rssi.get(pageId).setText("信号很强");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi4);
                     list_button_connect.get(pageId).setText("点击断开");
-                }
-                else if (rssi <= -50 && rssi > -70){
+                } else if (rssi <= -50 && rssi > -70) {
                     list_text_rssi.get(pageId).setText("信号较强");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi3);
                     list_button_connect.get(pageId).setText("点击断开");
-                }
-
-                else if (rssi > -90 && rssi <= -70){
+                } else if (rssi > -90 && rssi <= -70) {
                     list_text_rssi.get(pageId).setText("信号一般");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi2);
                     list_button_connect.get(pageId).setText("点击断开");
-                }
-
-                else if (rssi <= -90){
+                } else if (rssi <= -90) {
                     list_text_rssi.get(pageId).setText("信号较弱");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi1);
                     list_button_connect.get(pageId).setText("点击断开");
-                }
-                else if (rssi == 0){
+                } else if (rssi == 0) {
                     list_text_rssi.get(pageId).setText("正在连接");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);
                     list_button_connect.get(pageId).setText("正在连接");
-                }
-                else if (rssi >= 0){
+                } else if (rssi >= 0) {
                     list_text_rssi.get(pageId).setText("信号断开");
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);
                     list_button_connect.get(pageId).setText("点击连接");
@@ -791,7 +857,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void checkConnect(final int current){
+    private void checkConnect(final int current) {
         final Timer timer = new Timer();
 
         TimerTask timerTask = new TimerTask() {
@@ -810,10 +876,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        timer.schedule(timerTask,8000);
+        timer.schedule(timerTask, 8000);
     }
-
-
 
     @Override
     protected void onPause() {
@@ -835,6 +899,7 @@ public class MainActivity extends AppCompatActivity {
         }
         mExit = 1;
         Log.i("123", "MainActivity closed!!!");
+        mp = null;
     }
 
     private void displayGattServices(List<BluetoothGattService> gattServices) {

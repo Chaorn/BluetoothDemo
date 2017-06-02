@@ -161,7 +161,7 @@ public class ScanActivity extends AppCompatActivity {
     private void showNormalDialog(final TextView name, final TextView address){
         final AlertDialog.Builder normalDialog =
                 new AlertDialog.Builder(ScanActivity.this);
-        normalDialog.setIcon(R.drawable.logo);
+        normalDialog.setIcon(R.mipmap.ic_launcher);
         normalDialog.setTitle("添加设备");
         normalDialog.setMessage("是否添加"+name.getText().toString());
         normalDialog.setPositiveButton("确定",
