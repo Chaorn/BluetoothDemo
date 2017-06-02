@@ -54,7 +54,7 @@ public class ScanActivity extends AppCompatActivity {
     //蓝牙适配器List
     private List<BluetoothDevice> mBlueList = new ArrayList<>();
     SharedPreferences spre;
-    MainActivity mainActivity = new MainActivity();
+    //MainActivity mainActivity = new MainActivity();
     @TargetApi(Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +115,6 @@ public class ScanActivity extends AppCompatActivity {
             }
             requestPermissions(new String[] {Manifest.permission.WRITE_CONTACTS},
                     MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-            return;
         }
     }
     private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
@@ -178,7 +177,7 @@ public class ScanActivity extends AppCompatActivity {
                             editor.putString("Name"+MainActivity.bleId, name.getText().toString());
                             editor.putString("Address"+MainActivity.bleId, address.getText().toString());
                             editor.putInt("Id", MainActivity.bleId);
-                            editor.commit();
+                            editor.apply();
                             MainActivity.isPause = false;
                             MainActivity.isScan = true;
                             finish();

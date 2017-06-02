@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Created by Administrator on 2017/2/23.
+ * Created by Charon on 2017/2/23.
  */
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothLeService extends Service {
@@ -133,7 +133,6 @@ public class BluetoothLeService extends Service {
             Log.d("TAG", "不能获取a BluetoothAdapter.");
             return false;
         }
-
         return true;
     }
 
@@ -145,20 +144,6 @@ public class BluetoothLeService extends Service {
                     "BluetoothAdapter不能初始化 or 未知 address.");
             return false;
         }
-
-        /*// 以前连接过的设备，重新连接. (��ǰ���ӵ��豸�� ������������)
-        if (mBluetoothDeviceAddress != null
-                && address.equals(mBluetoothDeviceAddress)
-                && mBluetoothGattList.get(currentNum) != null) {
-            Log.d("123",
-                    "尝试使用现在的 mBluetoothGatt连接.");
-            if (mBluetoothGattList.get(currentNum).connect()) {
-                mConnectionState = STATE_CONNECTING;
-                return true;
-            } else {
-                return false;
-            }
-        }*/
 
         final BluetoothDevice device = mBluetoothAdapter
                 .getRemoteDevice(address);
@@ -179,7 +164,6 @@ public class BluetoothLeService extends Service {
         //这个方法需要三个参 数：一个Context对象，自动连接（boolean值,表示只要BLE设备可用是否自动连接到它），和BluetoothGattCallback调用。
         Log.d("TAG", "Trying to create a new connection.");
         mConnectionState = STATE_CONNECTING;
-        //mBluetoothGatt.readRemoteRssi();
         return true;
     }
     private boolean checkGatt(BluetoothGatt bluetoothGatt) {
@@ -362,7 +346,6 @@ public class BluetoothLeService extends Service {
 
         if (mBluetoothAdapter == null || mBluetoothGattList.get(gattId) == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
         } else mBluetoothGattList.get(gattId).writeCharacteristic(characteristic);
     }
 
