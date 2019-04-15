@@ -25,9 +25,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.activities.ScanActivity"/>
+        <activity android:name=".ui.activities.ScanActivity"
+            />
         <service android:name=".ble.BluetoothLeService" android:enabled="true"/>
         <activity android:name=".ui.activities.EditActivity"/>
+        <activity android:name=".ui.activities.LiveActivity"/>
     </application>
 
 </manifest>

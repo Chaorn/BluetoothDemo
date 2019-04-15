@@ -40,6 +40,8 @@ import android.widget.Toast;
 
 import com.charon.www.bluetoothchuying.ble.BluetoothLeService;
 import com.charon.www.bluetoothchuying.R;
+import com.charon.www.bluetoothchuying.ble.ScreenBroadcastListener;
+import com.charon.www.bluetoothchuying.ble.ScreenManager;
 import com.charon.www.bluetoothchuying.ui.adapter.ViewpageAdapter;
 
 import java.util.ArrayList;
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mHandler = new Handler();
-
+        setLiveActivity();
         init();
         initBle();
 
@@ -104,6 +106,23 @@ public class MainActivity extends AppCompatActivity {
 
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);//绑定服务
         Log.d("123", "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
+    }
+    private void setLiveActivity() {
+        final ScreenManager manager = ScreenManager.getInstance(MainActivity.this);
+        ScreenBroadcastListener listener = new ScreenBroadcastListener(this);
+        listener.setScreenStateListener(new ScreenBroadcastListener.ScreenStateListener() {
+            @Override
+            public void screenOn() {
+                Log.d("Main", "screenOn");
+                manager.finishLiveActivity();
+            }
+
+            @Override
+            public void screenOff() {
+                Log.d("Main", "screenOff");
+                manager.startLiveActivity();
+            }
+        });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -249,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                 if (mGattCharacteristics != null) {
                     for (int i = 0; i < mGattCharacteristics.size(); i++) {
                         for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
-                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
+                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("00001101-0000-1000-8000-00805F9B34FB")) {//对应的uuid
                                 characteristic = mGattCharacteristics.get(i).get(j);
                                 write(characteristic, new byte[]{(byte) 0xff});//写入的数据
                                 mBluetoothLeService.writeCharacteristic(characteristic, gattId);
@@ -264,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
                 if (mGattCharacteristics != null) {
                     for (int i = 0; i < mGattCharacteristics.size(); i++) {
                         for (int j = 0; j < mGattCharacteristics.get(i).size(); j++) {
-                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("0000fff1-0000-1000-8000-00805f9b34fb")) {//对应的uuid
+                            if (mGattCharacteristics.get(i).get(j).getUuid().toString().equals("00001101-0000-1000-8000-00805F9B34FB")) {//对应的uuid
                                 characteristic = mGattCharacteristics.get(i).get(j);
                                 write(characteristic, new byte[]{0x00});//写入的数据
                                 mBluetoothLeService.writeCharacteristic(characteristic, gattId);
@@ -649,7 +668,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                     }
-                }, 3000);
+                }, 200);
             }
         } else {
             list_text_rssi.get(currentNum).setText("信号断开");
@@ -736,7 +755,6 @@ public class MainActivity extends AppCompatActivity {
                     list_image_wifi.get(pageId).setImageResource(R.drawable.wifi0);
                     list_button_connect.get(pageId).setText("点击连接");
                 }
-
             }
         });
     }
@@ -756,7 +774,6 @@ public class MainActivity extends AppCompatActivity {
                             list_button_connect.get(current).setText("点击连接");
                         }
                     });
-
                 }
             }
         };
@@ -766,6 +783,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d("Main", "onPause");
+        //setLiveActivity();
         if (isRegister) {
             unregisterReceiver(mGattUpdateReceiver);
             isRegister = false;

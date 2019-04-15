@@ -28,6 +28,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.charon.www.bluetoothchuying.ble.ScreenBroadcastListener;
+import com.charon.www.bluetoothchuying.ble.ScreenManager;
 import com.charon.www.bluetoothchuying.ui.adapter.LeDeviceListAdapter;
 import com.charon.www.bluetoothchuying.R;
 
@@ -60,6 +62,7 @@ public class ScanActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.scanble);
+
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar_scan1);
         setTitle(R.string.none);
         setSupportActionBar(mToolbar);
@@ -117,6 +120,7 @@ public class ScanActivity extends AppCompatActivity {
                     MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
         }
     }
+
     private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
         new AlertDialog.Builder(ScanActivity.this)
                 .setMessage(message)
@@ -209,7 +213,25 @@ public class ScanActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        //setLiveActivity();
         scanLeDevice(false);
+    }
+    private void setLiveActivity() {
+        final ScreenManager manager = ScreenManager.getInstance(ScanActivity.this);
+        ScreenBroadcastListener listener = new ScreenBroadcastListener(this);
+        listener.setScreenStateListener(new ScreenBroadcastListener.ScreenStateListener() {
+            @Override
+            public void screenOn() {
+                Log.d("Main", "screenOn");
+                manager.finishLiveActivity();
+            }
+
+            @Override
+            public void screenOff() {
+                Log.d("Main", "screenOff");
+                manager.startLiveActivity();
+            }
+        });
     }
     /**
      * 设备搜索
